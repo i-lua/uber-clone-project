@@ -4,11 +4,12 @@ import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons, images } from "@/constants";
 import { useSignIn } from "@clerk/clerk-expo";
-import { Link, router } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Image, ScrollView, Text, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 const SignIn = () => {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const router = useRouter();
 
   const [form, setForm] = useState({
     email: "",
@@ -16,7 +17,9 @@ const SignIn = () => {
   });
 
   const onSignInPress = useCallback(async () => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      return;
+    }
 
     try {
       const signInAttempt = await signIn.create({
@@ -26,16 +29,16 @@ const SignIn = () => {
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
-        router.replace("/(root)/(tabs)/home");
+        router.replace("/");
       } else {
-        console.log(JSON.stringify(signInAttempt, null, 2));
-        Alert.alert("Error", "Log in failed. Please try again.");
+        // See https://clerk.com/docs/custom-flows/error-handling
+        // for more info on error handling
+        console.error(JSON.stringify(signInAttempt, null, 2));
       }
     } catch (err: any) {
-      console.log(JSON.stringify(err, null, 2));
-      Alert.alert("Error", err.errors[0].longMessage);
+      console.error(JSON.stringify(err, null, 2));
     }
-  }, [isLoaded, form]);
+  }, [isLoaded, signIn, form.email, form.password, setActive, router]);
 
   return (
     <ScrollView className="flex-1 bg-white">
@@ -61,13 +64,14 @@ const SignIn = () => {
             label="Password"
             placeholder="Enter password"
             icon={icons.lock}
+            secureTextEntry={true}
             textContentType="password"
             value={form.password}
             onChangeText={(value) => setForm({ ...form, password: value })}
           />
 
           <CustomButton
-            title="Sign Up"
+            title="Sign In"
             onPress={onSignInPress}
             className="mt-6"
           />

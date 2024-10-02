@@ -9,6 +9,7 @@ import { ScrollView, Text, View } from "react-native";
 import { useSignUp } from "@clerk/clerk-expo";
 import { Link, router } from "expo-router";
 import ReactNativeModal from "react-native-modal";
+import { fetchAPI } from "@/lib/fetch";
 const SignUp = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -130,13 +131,9 @@ const SignUp = () => {
         </View>
         <ReactNativeModal
           isVisible={verification.state === "pending"}
-          // onBackdrop={() =>
-          //   setVerification({ ...verification, state: 'default'})
-          // }
           onModalHide={() => {
-            if (verification.state === "success") {
+            if (verification.state === "success")
               setShowSuccessModal(true);
-            }
           }}
         >
           <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
@@ -168,6 +165,7 @@ const SignUp = () => {
             />
           </View>
         </ReactNativeModal>
+        
         <ReactNativeModal isVisible={showSuccessModal}>
           <View className="bg-white px-7 py-9 rounded-2xl min-h-[300px]">
             <Image
@@ -182,7 +180,8 @@ const SignUp = () => {
             </Text>
             <CustomButton
               title="Browse Home"
-              onPress={() => router.push(`/(root)/(tabs)/home`)}
+              onPress={() => {setShowSuccessModal(false);
+                router.push(`/(root)/(tabs)/home`);}}
               className="mt-5"
             />
           </View>
