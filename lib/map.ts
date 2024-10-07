@@ -15,6 +15,7 @@ export const generateMarkersFromData = ({
     return data.map((driver) => {
         const latOffset = (Math.random() - 0.5) * 0.01; // Random offset between -0.005 and 0.005
         const lngOffset = (Math.random() - 0.5) * 0.01; // Random offset between -0.005 and 0.005
+    
 
         return {
             latitude: userLatitude + latOffset,
@@ -100,12 +101,24 @@ export const calculateDriverTimes = async ({
                 `https://maps.googleapis.com/maps/api/directions/json?origin=${marker.latitude},${marker.longitude}&destination=${userLatitude},${userLongitude}&key=${directionsAPI}`,
             );
             const dataToUser = await responseToUser.json();
+
+            if (!dataToUser.routes || !dataToUser.routes[0]?.legs[0]?.duration?.value) {
+                console.error("Error: Invalid data returned from Google API for user location");
+                return { ...marker, time: undefined, price: undefined }; // Avoid undefined time
+            }
+
             const timeToUser = dataToUser.routes[0].legs[0].duration.value; // Time in seconds
 
             const responseToDestination = await fetch(
                 `https://maps.googleapis.com/maps/api/directions/json?origin=${userLatitude},${userLongitude}&destination=${destinationLatitude},${destinationLongitude}&key=${directionsAPI}`,
             );
             const dataToDestination = await responseToDestination.json();
+
+            if (!dataToDestination.routes || !dataToDestination.routes[0]?.legs[0]?.duration?.value) {
+                console.error("Error: Invalid data returned from Google API for destination");
+                return { ...marker, time: undefined, price: undefined }; // Avoid undefined time
+            }
+
             const timeToDestination =
                 dataToDestination.routes[0].legs[0].duration.value; // Time in seconds
 
@@ -118,5 +131,6 @@ export const calculateDriverTimes = async ({
         return await Promise.all(timesPromises);
     } catch (error) {
         console.error("Error calculating driver times:", error);
+        return markers.map(marker => ({ ...marker, time: undefined, price: undefined })); // Fallback to avoid undefined
     }
 };
